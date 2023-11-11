@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Chunk.Enums;
 using UnityEngine;
 using static Consts.Chunk;
@@ -14,17 +15,22 @@ namespace Chunk
         public ChunkData ChunkData;
         public GameInitialization GameInitialization;
 
+        private Mesh _chunkMesh;
+
         private List<Vector3> _verticies = new List<Vector3>();
         private List<int> _triangles = new List<int>();
 
         private void Start()
         {
-            GenerateChunk();
+            _chunkMesh = new Mesh();
+            RegenerateMesh();
+            _meshFilter.mesh = _chunkMesh;
         }
 
-        private void GenerateChunk()
+        private void RegenerateMesh()
         {
-            var mesh = new Mesh();
+            _verticies.Clear();
+            _triangles.Clear();
 
             for (int x = 0; x < CHUNK_WIDTH; x++)
             {
@@ -37,15 +43,27 @@ namespace Chunk
                 }
             }
 
-            mesh.vertices = _verticies.ToArray();
-            mesh.triangles = _triangles.ToArray();
+            _chunkMesh.triangles = Array.Empty<int>();
+            _chunkMesh.vertices = _verticies.ToArray();
+            _chunkMesh.triangles = _triangles.ToArray();
 
-            mesh.Optimize();
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
+            _chunkMesh.Optimize();
+            _chunkMesh.RecalculateNormals();
+            _chunkMesh.RecalculateBounds();
 
-            _meshFilter.mesh = mesh;
-            _meshCollider.sharedMesh = mesh;
+            _meshCollider.sharedMesh = _chunkMesh;
+        }
+
+        public void SpawnBlock(Vector3Int position)
+        {
+            ChunkData.Blocks[position.x, position.y, position.z] = BlockType.Grass;
+            RegenerateMesh();
+        }
+
+        public void RemoveBlock(Vector3Int position)
+        {
+            ChunkData.Blocks[position.x, position.y, position.z] = BlockType.Air;
+            RegenerateMesh();
         }
 
         private void GenerateBlock(int x, int y, int z)
@@ -124,7 +142,7 @@ namespace Chunk
             else
             {
                 if (position.y < 0 || position.y >= CHUNK_HEIGHT) return BlockType.Air;
-                
+
                 var adjacentChunkPosition = ChunkData.Position;
 
                 if (position.x < 0)
@@ -137,7 +155,7 @@ namespace Chunk
                     adjacentChunkPosition.x++;
                     position.x -= CHUNK_WIDTH;
                 }
-                
+
                 if (position.z < 0)
                 {
                     adjacentChunkPosition.y--;

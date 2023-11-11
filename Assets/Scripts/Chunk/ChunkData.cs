@@ -7,5 +7,6 @@ namespace Chunk
     {
         public Vector2Int Position;
         public BlockType[,,] Blocks;
+        public ChunkRenderer ChunkRenderer;
     }
 }
