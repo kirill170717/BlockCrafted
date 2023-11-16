@@ -1,22 +1,60 @@
+﻿using Chunk;
 using UnityEngine;
+using static Consts.Chunk;
 
 namespace Player
 {
     public class PlayerController : MonoBehaviour
     {
-        [SerializeField] private CharacterController _characterController;
+        public static PlayerController Instance;
 
-        [SerializeField] private float _speed = 1;
-        [SerializeField] private float _speedRotation = 3;
+        public Camera MainCamera;
 
-        void Update()
+        private void Awake()
         {
-            transform.Rotate(0, Input.GetAxis("Mouse X") * _speedRotation, 0);
+            if (Instance)
+            {
+                Destroy(this);
+            }
+            else
+            {
+                Instance = this;
+                MainCamera = Camera.main;
+            }
+        }
 
-            var forward = transform.TransformDirection(Vector3.forward);
-            var curSpeed = _speed * Input.GetAxis("Vertical");
+        private void Update()
+        {
+            CheckMouseInput();
+        }
 
-            _characterController.SimpleMove(forward * curSpeed);
+        private void CheckMouseInput()
+        {
+            if (!Input.GetMouseButtonDown(0) && !Input.GetMouseButtonDown(1)) return;
+
+            var isDestroying = Input.GetMouseButtonDown(0);
+            var ray = MainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+
+            if (Physics.Raycast(ray, out var hit))
+            {
+                var center = hit.normal * (BLOCK_SCALE / 2);
+                var blockCenter = isDestroying ? hit.point - center : hit.point + center;
+                var blockWorldPosition = Vector3Int.FloorToInt(blockCenter / BLOCK_SCALE);
+                var chunkPosition = ChunkExtensions.GetChunkContainingBlock(blockWorldPosition);
+
+                if (!GameInitialization.Instance.Chunks.TryGetValue(chunkPosition, out var chunkData)) return;
+
+                var chunkOrigin = new Vector3Int(chunkPosition.x, 0, chunkPosition.y) * CHUNK_WIDTH;
+
+                if (isDestroying)
+                {
+                    chunkData.ChunkRenderer.RemoveBlock(blockWorldPosition - chunkOrigin);
+                }
+                else
+                {
+                    chunkData.ChunkRenderer.SpawnBlock(blockWorldPosition - chunkOrigin);
+                }
+            }
         }
     }
 }
