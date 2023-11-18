@@ -1,9 +1,10 @@
 ﻿using System;
-using Chunk.Enums;
+using ChunkScripts.Enums;
 using UnityEngine;
 using static Consts.Chunk;
 
-public class TerrainGenerator : MonoBehaviour
+[CreateAssetMenu(menuName = "Terrain/TerrainGenerator", fileName = "Terrain")]
+public class TerrainGenerator : ScriptableObject
 {
     [Serializable]
     private class NoiseOctaveSetting
@@ -19,52 +20,52 @@ public class TerrainGenerator : MonoBehaviour
 
     private FastNoiseLite[] _octaveNoises;
     private FastNoiseLite _warpNoise;
-    
-    private void Awake()
-    {
-        InitNoises();
-    }
 
-    public void InitNoises()
+    public void InitNoises(int seed)
     {
-        _warpNoise = new FastNoiseLite();
+        _warpNoise = new FastNoiseLite(seed);
         _warpNoise.SetNoiseType(_domainWarp.NoiseType);
         _warpNoise.SetFrequency(_domainWarp.Frequency);
         _warpNoise.SetDomainWarpAmp(_domainWarp.Amplitude);
 
         _octaveNoises = new FastNoiseLite[_noiseOctaves.Length];
-        
+
         for (int i = 0; i < _noiseOctaves.Length; i++)
         {
-            _octaveNoises[i] = new FastNoiseLite();
+            _octaveNoises[i] = new FastNoiseLite(seed);
             _octaveNoises[i].SetNoiseType(_noiseOctaves[i].NoiseType);
             _octaveNoises[i].SetFrequency(_noiseOctaves[i].Frequency);
         }
     }
 
-    public BlockType[,,] GenerateTerrain(int xOffset, int yOffset)
+    public BlockType[] GenerateTerrain(float xOffset, float zOffset)
     {
-        var fastNoise = new FastNoiseLite();
-        var result = new BlockType[CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_WIDTH];
+        var result = new BlockType[CHUNK_WIDTH * CHUNK_HEIGHT * CHUNK_WIDTH];
 
         for (int x = 0; x < CHUNK_WIDTH; x++)
         {
             for (int z = 0; z < CHUNK_WIDTH; z++)
             {
-                var height = GetHeight((x * BLOCK_SCALE + xOffset), (z * BLOCK_SCALE + yOffset));
-                
+                var worldX = x * BLOCK_SCALE + xOffset;
+                var worldZ = z * BLOCK_SCALE + zOffset;
+                var height = GetHeight(worldX, worldZ);
+                var bedrockLayerHeight = 1f + _octaveNoises[0].GetNoise(worldX, worldZ);
+
                 for (int y = 0; y < height / BLOCK_SCALE; y++)
                 {
+                    var index = x + y * CHUNK_WIDTH_SQ + z * CHUNK_WIDTH;
+
                     if (height - y * BLOCK_SCALE < GRASS_LAYER_HEIGHT)
                     {
-                        result[x, y, z] = BlockType.Grass;
+                        result[index] = BlockType.Grass;
                     }
-                    else if(y * BLOCK_SCALE < BEDROCK_LAYER_HEIGHT)
+                    else if (y * BLOCK_SCALE < bedrockLayerHeight)
                     {
-                        result[x, y, z] = BlockType.Bedrock;
-                    }else
+                        result[index] = BlockType.Bedrock;
+                    }
+                    else
                     {
-                        result[x, y, z] = BlockType.Dirt;
+                        result[index] = BlockType.Dirt;
                     }
                 }
             }

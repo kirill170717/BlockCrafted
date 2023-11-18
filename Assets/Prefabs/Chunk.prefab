@@ -121,3 +121,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _meshFilter: {fileID: 2122134389497490663}
   _meshCollider: {fileID: 6497367279283467549}
+  Blocks: {fileID: 11400000, guid: f1e5407bb80c3274997391fc1484ec4a, type: 2}
+  GameInitialization: {fileID: 0}
