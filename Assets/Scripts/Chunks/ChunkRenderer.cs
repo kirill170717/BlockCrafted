@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-using DefaultNamespace;
+using Blocks.Enums;
 using UnityEngine;
 
 namespace Chunks
@@ -7,13 +7,10 @@ namespace Chunks
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class ChunkRenderer : MonoBehaviour
     {
-        
-
-        
-
         [SerializeField] private MeshFilter _meshFilter;
+        [SerializeField] private MeshCollider _meshCollider;
 
-        public int[,,] Blocks = new int[Constants.Chunk.CHUNK_WIDTH, Constants.Chunk.CHUNK_HEIGHT, Constants.Chunk.CHUNK_WIDTH];
+        public ChunkData ChunkData;
 
         private readonly List<Vector3> verticies = new();
         private readonly List<int> triangles = new();
@@ -21,8 +18,6 @@ namespace Chunks
         private void Start()
         {
             var mesh = new Mesh();
-
-            Blocks = TerrainGenerator.GenerateTerrain();
 
             for (var y = 0; y < Constants.Chunk.CHUNK_HEIGHT; y++)
             {
@@ -39,15 +34,17 @@ namespace Chunks
             mesh.vertices = verticies.ToArray();
             mesh.triangles = triangles.ToArray();
 
+            mesh.Optimize();
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
 
             _meshFilter.mesh = mesh;
+            _meshCollider.sharedMesh = mesh;
         }
 
         private void GenerateBlock(Vector3Int blockPosition)
         {
-            if (GetBlockAtPosition(blockPosition) == 0) return;
+            if (GetBlockAtPosition(blockPosition) == BlockType.Air) return;
 
             var up = blockPosition + Vector3Int.up;
             var down = blockPosition + Vector3Int.down;
@@ -56,81 +53,71 @@ namespace Chunks
             var forward = blockPosition + Vector3Int.forward;
             var back = blockPosition + Vector3Int.back;
 
-            if (GetBlockAtPosition(up) == 0) GenerateTopSide(blockPosition);
-            if (GetBlockAtPosition(down) == 0) GenerateBottomSide(blockPosition);
-            if (GetBlockAtPosition(left) == 0) GenerateLeftSide(blockPosition);
-            if (GetBlockAtPosition(right) == 0) GenerateRightSide(blockPosition);
-            if (GetBlockAtPosition(forward) == 0) GenerateFrontSide(blockPosition);
-            if (GetBlockAtPosition(back) == 0) GenerateBackSide(blockPosition);
+            var upBlock = GetBlockAtPosition(up);
+            var downBlock = GetBlockAtPosition(down);
+            var leftBlock = GetBlockAtPosition(left);
+            var rightBlock = GetBlockAtPosition(right);
+            var forwardBlock = GetBlockAtPosition(forward);
+            var backBlock = GetBlockAtPosition(back);
+
+            if (upBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.TopVerticies, blockPosition);
+
+            if (downBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.BottomVerticies, blockPosition);
+
+            if (leftBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.LeftVerticies, blockPosition);
+
+            if (rightBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.RightVerticies, blockPosition);
+
+            if (forwardBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.FrontVerticies, blockPosition);
+
+            if (backBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.BackVerticies, blockPosition);
         }
 
-        private int GetBlockAtPosition(Vector3Int blockPosition)
+        private BlockType GetBlockAtPosition(Vector3Int blockPosition)
         {
             if (blockPosition.x is >= 0 and < Constants.Chunk.CHUNK_WIDTH &&
                 blockPosition.y is >= 0 and < Constants.Chunk.CHUNK_HEIGHT &&
                 blockPosition.z is >= 0 and < Constants.Chunk.CHUNK_WIDTH)
             {
-                return Blocks[blockPosition.x, blockPosition.y, blockPosition.z];
+                return ChunkData.Blocks[blockPosition.x, blockPosition.y, blockPosition.z];
             }
 
-            return 0;
-        }
+            if (blockPosition.y is < 0 or >= Constants.Chunk.CHUNK_WIDTH) return BlockType.Air;
 
-        private void GenerateTopSide(Vector3Int blockPosition)
-        {
-            foreach (var topVertex in Constants.Chunk.TopVerticies)
+            var adjacentChunkPosition = ChunkData.ChunkPosition;
+
+            if (blockPosition.x < 0)
             {
-                verticies.Add(topVertex + blockPosition);
+                adjacentChunkPosition.x--;
+                blockPosition.x += Constants.Chunk.CHUNK_WIDTH;
+            }
+            else if (blockPosition.x >= Constants.Chunk.CHUNK_WIDTH)
+            {
+                adjacentChunkPosition.x++;
+                blockPosition.x -= Constants.Chunk.CHUNK_WIDTH;
             }
 
-            AddLastVerticiesSquare();
-        }
-
-        private void GenerateBottomSide(Vector3Int blockPosition)
-        {
-            foreach (var bottomVertex in Constants.Chunk.BottomVerticies)
+            if (blockPosition.z < 0)
             {
-                verticies.Add(bottomVertex + blockPosition);
+                adjacentChunkPosition.y--;
+                blockPosition.z += Constants.Chunk.CHUNK_WIDTH;
+            }
+            else if (blockPosition.z >= Constants.Chunk.CHUNK_WIDTH)
+            {
+                adjacentChunkPosition.y++;
+                blockPosition.z -= Constants.Chunk.CHUNK_WIDTH;
             }
 
-            AddLastVerticiesSquare();
+            return GameWorld.ChunkDatas.TryGetValue(adjacentChunkPosition, out var adjacentChunk)
+                ? adjacentChunk.Blocks[blockPosition.x, blockPosition.y, blockPosition.z]
+                : BlockType.Air;
         }
 
-        private void GenerateLeftSide(Vector3Int blockPosition)
+        private void GenerateBlockSide(Vector3[] sideVerticies, Vector3Int blockPosition)
         {
-            foreach (var leftVertex in Constants.Chunk.LeftVerticies)
+            foreach (var vertex in sideVerticies)
             {
-                verticies.Add(leftVertex + blockPosition);
-            }
-
-            AddLastVerticiesSquare();
-        }
-
-        private void GenerateRightSide(Vector3Int blockPosition)
-        {
-            foreach (var rightVertex in Constants.Chunk.RightVerticies)
-            {
-                verticies.Add(rightVertex + blockPosition);
-            }
-
-            AddLastVerticiesSquare();
-        }
-
-        private void GenerateFrontSide(Vector3Int blockPosition)
-        {
-            foreach (var frontVertex in Constants.Chunk.FrontVerticies)
-            {
-                verticies.Add(frontVertex + blockPosition);
-            }
-
-            AddLastVerticiesSquare();
-        }
-
-        private void GenerateBackSide(Vector3Int blockPosition)
-        {
-            foreach (var backVertex in Constants.Chunk.BackVerticies)
-            {
-                verticies.Add(backVertex + blockPosition);
+                verticies.Add((vertex + blockPosition) * Constants.Block.BLOCK_SCALE);
             }
 
             AddLastVerticiesSquare();
