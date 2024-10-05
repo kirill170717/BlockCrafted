@@ -25,14 +25,14 @@ namespace Player
 
             if (GetBlockIndex(breakBlock, out var chunkData, out var index)) return;
 
-            if (placeBlock)
-            {
-                chunkData.ChunkRenderer.PlaceBlock(index);
-            }
-            else if (breakBlock)
-            {
-                chunkData.ChunkRenderer.RemoveBlock(index);
-            }
+            // if (placeBlock)
+            // {
+            //     chunkData.ChunkRenderer.PlaceBlock(index);
+            // }
+            // else if (breakBlock)
+            // {
+            //     chunkData.ChunkRenderer.RemoveBlock(index);
+            // }
         }
 
         private bool GetBlockIndex(bool breakBlock, out ChunkData chunkData, out int index)

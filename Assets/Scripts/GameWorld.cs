@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Chunks;
+using ScriptableObjects;
 using Player;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ public class GameWorld : MonoBehaviour
     [SerializeField] private PlayerController _player;
     [SerializeField] private ChunkRenderer _chunkPrefab;
     [SerializeField] private TerrainGenerator _terrainGenerator;
+    [SerializeField] private int _worldSeed;
     [SerializeField] private int _renderDistance = 6;
 
     public static Dictionary<Vector2Int, ChunkData> ChunkDatas = new();
@@ -18,6 +20,8 @@ public class GameWorld : MonoBehaviour
 
     private void Start()
     {
+        _terrainGenerator.InitializationNoises(_worldSeed);
+        
         StartCoroutine(GenerateChunks(false));
 
         var playerController = Instantiate(_player, new Vector3(10f, 20f, 10f), Quaternion.identity);
@@ -77,7 +81,7 @@ public class GameWorld : MonoBehaviour
     [ContextMenu("Regenerate world")]
     public void RegenerateWorld()
     {
-        _terrainGenerator.InitializationNoises();
+        _terrainGenerator.InitializationNoises(_worldSeed);
         
         foreach (var chunkData in ChunkDatas)
         {

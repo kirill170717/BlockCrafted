@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Blocks.Enums;
+using ScriptableObjects.Blocks;
 using UnityEngine;
 
 namespace Chunks
@@ -12,6 +13,7 @@ namespace Chunks
         [SerializeField] private MeshCollider _meshCollider;
 
         public ChunkData ChunkData;
+        public BlocksDatabase BlocksDatabase;
 
         private Mesh _mesh;
 
@@ -71,7 +73,9 @@ namespace Chunks
 
         private void GenerateBlock(Vector3Int blockPosition)
         {
-            if (GetBlockAtPosition(blockPosition) == BlockType.Air) return;
+            var blockType = GetBlockAtPosition(blockPosition);
+            
+            if (blockType == BlockType.Air) return;
 
             var up = blockPosition + Vector3Int.up;
             var down = blockPosition + Vector3Int.down;
@@ -87,17 +91,41 @@ namespace Chunks
             var forwardBlock = GetBlockAtPosition(forward);
             var backBlock = GetBlockAtPosition(back);
 
-            if (upBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.TopVerticies, blockPosition);
+            if (upBlock == BlockType.Air)
+            {
+                GenerateBlockSide(Constants.Chunk.TopVerticies, blockPosition);
+                AddUvs(blockType, Vector3Int.up);
+            }
 
-            if (downBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.BottomVerticies, blockPosition);
+            if (downBlock == BlockType.Air)
+            {
+                GenerateBlockSide(Constants.Chunk.BottomVerticies, blockPosition);
+                AddUvs(blockType, Vector3Int.down);
+            }
 
-            if (leftBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.LeftVerticies, blockPosition);
+            if (leftBlock == BlockType.Air)
+            {
+                GenerateBlockSide(Constants.Chunk.LeftVerticies, blockPosition);
+                AddUvs(blockType, Vector3Int.left);
+            }
 
-            if (rightBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.RightVerticies, blockPosition);
+            if (rightBlock == BlockType.Air)
+            {
+                GenerateBlockSide(Constants.Chunk.RightVerticies, blockPosition);
+                AddUvs(blockType, Vector3Int.right);
+            }
 
-            if (forwardBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.FrontVerticies, blockPosition);
+            if (forwardBlock == BlockType.Air)
+            {
+                GenerateBlockSide(Constants.Chunk.FrontVerticies, blockPosition);
+                AddUvs(blockType, Vector3Int.forward);
+            }
 
-            if (backBlock == BlockType.Air) GenerateBlockSide(Constants.Chunk.BackVerticies, blockPosition);
+            if (backBlock == BlockType.Air)
+            {
+                GenerateBlockSide(Constants.Chunk.BackVerticies, blockPosition);
+                AddUvs(blockType, Vector3Int.back);
+            }
         }
 
         private BlockType GetBlockAtPosition(Vector3Int blockPosition)
@@ -153,11 +181,6 @@ namespace Chunks
 
         private void AddLastVerticiesSquare()
         {
-            _uvs.Add(new Vector2(0, 0));
-            _uvs.Add(new Vector2(0, 1));
-            _uvs.Add(new Vector2(1, 0));
-            _uvs.Add(new Vector2(1, 1));
-
             _triangles.Add(_verticies.Count - 4);
             _triangles.Add(_verticies.Count - 3);
             _triangles.Add(_verticies.Count - 2);
@@ -165,6 +188,26 @@ namespace Chunks
             _triangles.Add(_verticies.Count - 3);
             _triangles.Add(_verticies.Count - 1);
             _triangles.Add(_verticies.Count - 2);
+        }
+
+        private void AddUvs(BlockType blockType, Vector3Int normal)
+        {
+            Vector2 uv;
+            var blockSettings = BlocksDatabase.GetBlockSettings(blockType);
+
+            if (blockSettings == null)
+            {
+                uv = new Vector2(160f / 256f, 224f / 256f);
+            }
+            else
+            {
+                uv = blockSettings.GetTextureOffset(normal) / 256f;
+            }
+
+            for (var i = 0; i < 4; i++)
+            {
+                _uvs.Add(uv);
+            }
         }
     }
 }

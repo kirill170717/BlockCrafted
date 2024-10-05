@@ -714,7 +714,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1556790840}
   - component: {fileID: 1556790841}
-  - component: {fileID: 1556790842}
   m_Layer: 0
   m_Name: GameWorld
   m_TagString: Untagged
@@ -751,36 +750,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _player: {fileID: 523133685696949597, guid: f97b3cb29cf4c48409d68926ca662ff1, type: 3}
   _chunkPrefab: {fileID: 6704217341576700888, guid: 7dc5849aa0810bc45ba0614d6a66be97, type: 3}
-  _terrainGenerator: {fileID: 1556790842}
+  _terrainGenerator: {fileID: 11400000, guid: 4ee5abedc7abd3246b3a9335dbc13461, type: 2}
+  _worldSeed: 0
   _renderDistance: 6
---- !u!114 &1556790842
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1556790838}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0ceb85f239b4582ba26a29baaa399f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Seed: 0
-  BaseHeight: 8
-  Octaves:
-  - NoiseType: 0
-    Frequency: 0.2
-    Amplitude: 0.6
-  - NoiseType: 0
-    Frequency: 0.04
-    Amplitude: 3
-  - NoiseType: 3
-    Frequency: 8
-    Amplitude: 10
-  DomainWarp:
-    NoiseType: 0
-    Frequency: 0.06
-    Amplitude: 15
 --- !u!1 &1994121562
 GameObject:
   m_ObjectHideFlags: 0
