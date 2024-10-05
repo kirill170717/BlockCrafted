@@ -1,4 +1,4 @@
-Shader "WorldShader"
+Shader "BlockCrafted/WorldShader"
 {
     Properties
     {

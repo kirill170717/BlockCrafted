@@ -11,6 +11,7 @@ public static class Constants
     {
         public const int CHUNK_WIDTH = 16;
         public const int CHUNK_HEIGHT = 256;
+        public const int CHUNK_WIDTH_SQ = CHUNK_WIDTH * CHUNK_WIDTH;
 
         public static readonly Vector3[] TopVerticies =
         {

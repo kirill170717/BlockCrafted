@@ -1,63 +1,82 @@
-﻿using Input;
+﻿using Chunks;
+using Input;
 using UnityEngine;
 
 namespace Player
 {
     public class PlayerController : MonoBehaviour
     {
-        public static PlayerController Instance;
+        [field: SerializeField] public Camera MainCamera { get; private set; }
 
-        public Camera MainCamera;
+        [SerializeField] private int _maxDistanceForInteraction = 5;
 
-        // private GameInitialization GameInit => GameInitialization.Instance;
-
-        private void Awake()
-        {
-            if (Instance)
-            {
-                Destroy(this);
-            }
-            else
-            {
-                Instance = this;
-            }
-
-            MainCamera = Camera.main;
-        }
+        private readonly Vector3 _centerPosition = new(0.5f, 0.5f);
 
         private void Update()
         {
-            var breakBlock = InputSystem.InputControls.GameActionMap.BreakBlock.IsPressed();
+            var breakBlock = InputSystem.InputControls.GameActionMap.RemoveBlock.IsPressed();
             var placeBlock = InputSystem.InputControls.GameActionMap.PlaceBlock.IsPressed();
             CheckMouseInput(breakBlock, placeBlock);
         }
 
         private void CheckMouseInput(bool breakBlock, bool placeBlock)
         {
-            // if (!breakBlock && !placeBlock) return;
-            //
-            // var ray = MainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
-            //
-            // if (!Physics.Raycast(ray, out var hit)) return;
-            //
-            // var center = hit.normal * (Consts.Chunk.BLOCK_SCALE / 2);
-            // var blockCenter = breakBlock ? hit.point - center : hit.point + center;
-            // var blockWorldPosition = Vector3Int.FloorToInt(blockCenter / Consts.Chunk.BLOCK_SCALE);
-            // var playerPosition = Vector3Int.FloorToInt(transform.position);
-            //
-            // if (Vector3Int.Distance(playerPosition, blockWorldPosition) > GameInit.MaxDistanceForInteraction) return;
-            //
-            // var chunkPosition = ChunkExtensions.GetChunkContainingBlock(blockWorldPosition);
-            //
-            // if (!GameInit.Chunks.TryGetValue(chunkPosition, out var chunkData)) return;
-            //
-            // var chunkOrigin = new Vector3Int(chunkPosition.x, 0, chunkPosition.y) * Consts.Chunk.CHUNK_WIDTH;
-            // var blockPosition = blockWorldPosition - chunkOrigin;
-            // var index = blockPosition.x + blockPosition.y * Consts.Chunk.CHUNK_WIDTH_SQ + blockPosition.z * Consts.Chunk.CHUNK_WIDTH;
-            //
-            // if (breakBlock) chunkData.Renderer.RemoveBlock(index);
-            //
-            // if (placeBlock) chunkData.Renderer.SpawnBlock(index);
+            if (!breakBlock && !placeBlock) return;
+
+            if (GetBlockIndex(breakBlock, out var chunkData, out var index)) return;
+
+            if (placeBlock)
+            {
+                chunkData.ChunkRenderer.PlaceBlock(index);
+            }
+            else if (breakBlock)
+            {
+                chunkData.ChunkRenderer.RemoveBlock(index);
+            }
+        }
+
+        private bool GetBlockIndex(bool breakBlock, out ChunkData chunkData, out int index)
+        {
+            var ray = MainCamera.ViewportPointToRay(_centerPosition);
+
+            if (!Physics.Raycast(ray, out var hit))
+            {
+                chunkData = null;
+                index = -1;
+                return true;
+            }
+
+            var blockWorldPosition = GetBlockWorldPosition(breakBlock, hit);
+            var playerPosition = Vector3Int.FloorToInt(transform.position);
+
+            if (Vector3Int.Distance(playerPosition, blockWorldPosition) > _maxDistanceForInteraction)
+            {
+                chunkData = null;
+                index = -1;
+                return true;
+            }
+
+            var chunkPosition = ChunkExtensions.GetChunkContainingBlock(blockWorldPosition);
+
+            if (!GameWorld.ChunkDatas.TryGetValue(chunkPosition, out chunkData))
+            {
+                index = -1;
+                return true;
+            }
+
+            var chunkOrigin = new Vector3Int(chunkPosition.x, 0, chunkPosition.y) * Constants.Chunk.CHUNK_WIDTH;
+            var blockPosition = blockWorldPosition - chunkOrigin;
+            index = blockPosition.x + blockPosition.y * Constants.Chunk.CHUNK_WIDTH_SQ +
+                    blockPosition.z * Constants.Chunk.CHUNK_WIDTH;
+            return false;
+        }
+
+        private Vector3Int GetBlockWorldPosition(bool breakBlock, RaycastHit hit)
+        {
+            var center = hit.normal * (Constants.Block.BLOCK_SCALE / 2);
+            var blockCenter = breakBlock ? hit.point - center : hit.point + center;
+            var blockWorldPosition = Vector3Int.FloorToInt(blockCenter / Constants.Block.BLOCK_SCALE);
+            return blockWorldPosition;
         }
     }
 }

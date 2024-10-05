@@ -75,7 +75,7 @@ namespace Input
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""BreakBlock"",
+                    ""name"": ""RemoveBlock"",
                     ""type"": ""Button"",
                     ""id"": ""b17a2ad4-3219-49fd-8e18-e1cb03334a11"",
                     ""expectedControlType"": """",
@@ -200,7 +200,7 @@ namespace Input
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""BreakBlock"",
+                    ""action"": ""RemoveBlock"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -244,7 +244,7 @@ namespace Input
             m_GameActionMap_Jump = m_GameActionMap.FindAction("Jump", throwIfNotFound: true);
             m_GameActionMap_Crouch = m_GameActionMap.FindAction("Crouch", throwIfNotFound: true);
             m_GameActionMap_Sprint = m_GameActionMap.FindAction("Sprint", throwIfNotFound: true);
-            m_GameActionMap_BreakBlock = m_GameActionMap.FindAction("BreakBlock", throwIfNotFound: true);
+            m_GameActionMap_RemoveBlock = m_GameActionMap.FindAction("RemoveBlock", throwIfNotFound: true);
             m_GameActionMap_PlaceBlock = m_GameActionMap.FindAction("PlaceBlock", throwIfNotFound: true);
         }
 
@@ -317,7 +317,7 @@ namespace Input
         private readonly InputAction m_GameActionMap_Jump;
         private readonly InputAction m_GameActionMap_Crouch;
         private readonly InputAction m_GameActionMap_Sprint;
-        private readonly InputAction m_GameActionMap_BreakBlock;
+        private readonly InputAction m_GameActionMap_RemoveBlock;
         private readonly InputAction m_GameActionMap_PlaceBlock;
         public struct GameActionMapActions
         {
@@ -328,7 +328,7 @@ namespace Input
             public InputAction @Jump => m_Wrapper.m_GameActionMap_Jump;
             public InputAction @Crouch => m_Wrapper.m_GameActionMap_Crouch;
             public InputAction @Sprint => m_Wrapper.m_GameActionMap_Sprint;
-            public InputAction @BreakBlock => m_Wrapper.m_GameActionMap_BreakBlock;
+            public InputAction @RemoveBlock => m_Wrapper.m_GameActionMap_RemoveBlock;
             public InputAction @PlaceBlock => m_Wrapper.m_GameActionMap_PlaceBlock;
             public InputActionMap Get() { return m_Wrapper.m_GameActionMap; }
             public void Enable() { Get().Enable(); }
@@ -354,9 +354,9 @@ namespace Input
                 @Sprint.started += instance.OnSprint;
                 @Sprint.performed += instance.OnSprint;
                 @Sprint.canceled += instance.OnSprint;
-                @BreakBlock.started += instance.OnBreakBlock;
-                @BreakBlock.performed += instance.OnBreakBlock;
-                @BreakBlock.canceled += instance.OnBreakBlock;
+                @RemoveBlock.started += instance.OnRemoveBlock;
+                @RemoveBlock.performed += instance.OnRemoveBlock;
+                @RemoveBlock.canceled += instance.OnRemoveBlock;
                 @PlaceBlock.started += instance.OnPlaceBlock;
                 @PlaceBlock.performed += instance.OnPlaceBlock;
                 @PlaceBlock.canceled += instance.OnPlaceBlock;
@@ -379,9 +379,9 @@ namespace Input
                 @Sprint.started -= instance.OnSprint;
                 @Sprint.performed -= instance.OnSprint;
                 @Sprint.canceled -= instance.OnSprint;
-                @BreakBlock.started -= instance.OnBreakBlock;
-                @BreakBlock.performed -= instance.OnBreakBlock;
-                @BreakBlock.canceled -= instance.OnBreakBlock;
+                @RemoveBlock.started -= instance.OnRemoveBlock;
+                @RemoveBlock.performed -= instance.OnRemoveBlock;
+                @RemoveBlock.canceled -= instance.OnRemoveBlock;
                 @PlaceBlock.started -= instance.OnPlaceBlock;
                 @PlaceBlock.performed -= instance.OnPlaceBlock;
                 @PlaceBlock.canceled -= instance.OnPlaceBlock;
@@ -418,7 +418,7 @@ namespace Input
             void OnJump(InputAction.CallbackContext context);
             void OnCrouch(InputAction.CallbackContext context);
             void OnSprint(InputAction.CallbackContext context);
-            void OnBreakBlock(InputAction.CallbackContext context);
+            void OnRemoveBlock(InputAction.CallbackContext context);
             void OnPlaceBlock(InputAction.CallbackContext context);
         }
     }

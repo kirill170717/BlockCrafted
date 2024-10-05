@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Blocks.Enums;
 using UnityEngine;
 
@@ -12,12 +13,39 @@ namespace Chunks
 
         public ChunkData ChunkData;
 
-        private readonly List<Vector3> verticies = new();
-        private readonly List<int> triangles = new();
+        private Mesh _mesh;
+
+        private readonly List<Vector3> _verticies = new();
+        private readonly List<Vector2> _uvs = new();
+        private readonly List<int> _triangles = new();
 
         private void Start()
         {
-            var mesh = new Mesh();
+            _mesh = new Mesh();
+
+            RegenerateMesh();
+
+            _meshFilter.mesh = _mesh;
+            _meshCollider.sharedMesh = _mesh;
+        }
+
+        public void PlaceBlock(int blockId)
+        {
+            // ChunkData.Blocks[blockPosition.x, blockPosition.y, blockPosition.z] = BlockType.Stone;
+            RegenerateMesh();
+        }
+
+        public void RemoveBlock(int blockId)
+        {
+            // ChunkData.Blocks[blockPosition.x, blockPosition.y, blockPosition.z] = BlockType.Air;
+            RegenerateMesh();
+        }
+
+        private void RegenerateMesh()
+        {
+            _verticies.Clear();
+            _uvs.Clear();
+            _triangles.Clear();
 
             for (var y = 0; y < Constants.Chunk.CHUNK_HEIGHT; y++)
             {
@@ -31,15 +59,14 @@ namespace Chunks
                 }
             }
 
-            mesh.vertices = verticies.ToArray();
-            mesh.triangles = triangles.ToArray();
+            _mesh.triangles = Array.Empty<int>();
+            _mesh.vertices = _verticies.ToArray();
+            _mesh.uv = _uvs.ToArray();
+            _mesh.triangles = _triangles.ToArray();
 
-            mesh.Optimize();
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-
-            _meshFilter.mesh = mesh;
-            _meshCollider.sharedMesh = mesh;
+            _mesh.Optimize();
+            _mesh.RecalculateNormals();
+            _mesh.RecalculateBounds();
         }
 
         private void GenerateBlock(Vector3Int blockPosition)
@@ -117,7 +144,8 @@ namespace Chunks
         {
             foreach (var vertex in sideVerticies)
             {
-                verticies.Add((vertex + blockPosition) * Constants.Block.BLOCK_SCALE);
+                var calculatedVertex = (vertex + blockPosition) * Constants.Block.BLOCK_SCALE;
+                _verticies.Add(calculatedVertex);
             }
 
             AddLastVerticiesSquare();
@@ -125,13 +153,18 @@ namespace Chunks
 
         private void AddLastVerticiesSquare()
         {
-            triangles.Add(verticies.Count - 4);
-            triangles.Add(verticies.Count - 3);
-            triangles.Add(verticies.Count - 2);
+            _uvs.Add(new Vector2(0, 0));
+            _uvs.Add(new Vector2(0, 1));
+            _uvs.Add(new Vector2(1, 0));
+            _uvs.Add(new Vector2(1, 1));
 
-            triangles.Add(verticies.Count - 3);
-            triangles.Add(verticies.Count - 1);
-            triangles.Add(verticies.Count - 2);
+            _triangles.Add(_verticies.Count - 4);
+            _triangles.Add(_verticies.Count - 3);
+            _triangles.Add(_verticies.Count - 2);
+
+            _triangles.Add(_verticies.Count - 3);
+            _triangles.Add(_verticies.Count - 1);
+            _triangles.Add(_verticies.Count - 2);
         }
     }
 }
